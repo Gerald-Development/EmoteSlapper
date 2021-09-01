@@ -12,13 +12,11 @@ import java.util.logging.Logger;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Webhook;
 
-public class EmoteValidator {
+public class MessageSender {
 	
-	private static final Logger LOGGER = Logger.getLogger(EmoteValidator.class.getName());
+	private static final Logger LOGGER = Logger.getLogger(MessageSender.class.getName());
 	
 	private static final int INCREMENT_AMOUNT = 30;
-	private static final int MAXIMUM_DELAY = 2200;
-	private static final int MINUMUM_DELAY = 1700;
 	
 	private Connection databaseConnection;
 	private JDA jda;
@@ -28,13 +26,13 @@ public class EmoteValidator {
 	
 	private int offset = 0;
 	
-	public EmoteValidator(Connection connection, JDA jda, Configuration config) {
+	public MessageSender(Connection connection, JDA jda, Configuration config) {
 		this.databaseConnection = connection;
 		this.jda = jda;
 		this.config = config;
 	}
 	
-	public void beginValidation() {
+	public void begin() {
 		try {
 			jda.awaitReady();
 			webhook = WebhookManager.getOrCreateWebhook(jda.getTextChannelById(config.getChannel()), "Emote Smacker", jda.getSelfUser().getId());
@@ -54,6 +52,7 @@ public class EmoteValidator {
 		try {
 			ResultSet emotesResultSet = DatabaseInterface.queryDatabase(databaseConnection,
 					String.format("SELECT * FROM NitroliteEmote LIMIT %s OFFSET %s", INCREMENT_AMOUNT, offset));
+
 			while (emotesResultSet.next()) {
 				resultCount++;
 				boolean emoteIsAnimated = emotesResultSet.getBoolean("isanimated");
@@ -62,9 +61,10 @@ public class EmoteValidator {
 				String emoteString = formatEmoteString(emoteIsAnimated, emoteName, emoteID);
 				emotesList.add(emoteString + "," + emoteID);
 			}
+			
 			WebhookManager.sendWebhookMessage(webhook, String.join(" ", emotesList));
 			LOGGER.log(Level.INFO, String.format("Result Count: %s Offset: %s", resultCount, offset));
-			Thread.sleep(random.nextInt(MAXIMUM_DELAY - MINUMUM_DELAY) + MINUMUM_DELAY);
+			Thread.sleep(random.nextInt(config.getMaximumDelay() - config.getMinimumDelay()) + config.getMinimumDelay());
 			
 			if (resultCount < INCREMENT_AMOUNT) selfDestruct();
 			else {

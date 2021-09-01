@@ -46,4 +46,14 @@ public class Configuration {
 		String dbURL = config.getProperty("Database.ConnectionURL");
 		return dbURL != null ? dbURL : "jdbc:postgresql://localhost/BaristaDB";
 	}
+	
+	public int getMinimumDelay() {
+		String minimumDelay = config.getProperty("Delay.Minimum");
+		return minimumDelay != null ? Integer.parseInt(minimumDelay) : 2500; 
+	}
+	
+	public int getMaximumDelay() {
+		String maximumDelay = config.getProperty("Delay.Maximum");
+		return maximumDelay != null ? Integer.parseInt(maximumDelay) : 3200; 
+	}
 }

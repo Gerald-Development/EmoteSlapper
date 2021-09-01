@@ -18,7 +18,7 @@ public class DiscordBot {
 	public JDA buildDiscordClient(String token) {
 		try {
 			return JDABuilder.createLight(token, GatewayIntent.GUILD_MESSAGES)
-					.addEventListeners(new BotReadyListener(), new BotMessageListener())
+					.addEventListeners(new BotEventListener())
 					.setActivity(Activity.watching("emote mayhem"))
 					.build();
 			

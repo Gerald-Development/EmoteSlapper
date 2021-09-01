@@ -22,7 +22,7 @@ public class DatabaseInterface {
 		return null;
 	}
 	
-	public static void executeDatabaseQuery(Connection databaseConnection, String query) {
+	public static void executeUpdate(Connection databaseConnection, String query) {
 		Statement statement;
 		try {
 			statement = databaseConnection.createStatement();
