@@ -13,7 +13,6 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 public class DiscordBot {
 	
 	private static final Logger LOGGER = Logger.getLogger(DiscordBot.class.getName());
-
 	
 	public JDA buildDiscordClient(String token) {
 		try {
