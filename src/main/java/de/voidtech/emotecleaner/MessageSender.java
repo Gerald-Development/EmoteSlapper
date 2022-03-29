@@ -25,6 +25,7 @@ public class MessageSender {
 	private Random random = new Random();
 	
 	private int offset = 0;
+	private boolean keepSlapping = true;
 	
 	public MessageSender(Connection connection, JDA jda, Configuration config) {
 		this.databaseConnection = connection;
@@ -50,28 +51,27 @@ public class MessageSender {
 		List<String> emotesList = new ArrayList<String>();
 		int resultCount = 0;
 		try {
-			ResultSet emotesResultSet = DatabaseInterface.queryDatabase(databaseConnection,
-					String.format("SELECT * FROM NitroliteEmote LIMIT %s OFFSET %s", INCREMENT_AMOUNT, offset));
+			while (keepSlapping) {
+				ResultSet emotesResultSet = DatabaseInterface.queryDatabase(databaseConnection,
+						String.format("SELECT * FROM NitroliteEmote LIMIT %s OFFSET %s", INCREMENT_AMOUNT, offset));
 
-			while (emotesResultSet.next()) {
-				resultCount++;
-				boolean emoteIsAnimated = emotesResultSet.getBoolean("isanimated");
-				String emoteName = emotesResultSet.getString("name");
-				String emoteID = emotesResultSet.getString("emoteid");
-				String emoteString = formatEmoteString(emoteIsAnimated, emoteName, emoteID);
-				emotesList.add(emoteString + "," + emoteID);
+				while (emotesResultSet.next()) {
+					resultCount++;
+					boolean emoteIsAnimated = emotesResultSet.getBoolean("isanimated");
+					String emoteName = emotesResultSet.getString("name");
+					String emoteID = emotesResultSet.getString("emoteid");
+					String emoteString = formatEmoteString(emoteIsAnimated, emoteName, emoteID);
+					emotesList.add(emoteString + "," + emoteID);
+				}
+				
+				WebhookManager.sendWebhookMessage(webhook, String.join(" ", emotesList));
+				LOGGER.log(Level.INFO, String.format("Result Count: %s Offset: %s", resultCount, offset));
+				Thread.sleep(random.nextInt(config.getMaximumDelay() - config.getMinimumDelay()) + config.getMinimumDelay());
+				
+				if (resultCount < INCREMENT_AMOUNT) keepSlapping = false;
+				else offset = offset + INCREMENT_AMOUNT;	
 			}
-			
-			WebhookManager.sendWebhookMessage(webhook, String.join(" ", emotesList));
-			LOGGER.log(Level.INFO, String.format("Result Count: %s Offset: %s", resultCount, offset));
-			Thread.sleep(random.nextInt(config.getMaximumDelay() - config.getMinimumDelay()) + config.getMinimumDelay());
-			
-			if (resultCount < INCREMENT_AMOUNT) selfDestruct();
-			else {
-				offset = offset + INCREMENT_AMOUNT;
-				slapEmotes();
-			}
-			
+			selfDestruct();
 		} catch (SQLException | InterruptedException e) {
 			LOGGER.log(Level.SEVERE, "An exception has occurred: " + e.getMessage());
 		}
